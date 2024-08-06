@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -8,10 +8,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { AlertCircle, Play, Save, Trash2, Pencil, BarChart, PresentationScreen } from "lucide-react"
+import { AlertCircle, Play, Save, Trash2, Pencil, BarChart, PresentationScreen, Upload } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { motion } from "framer-motion";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import * as d3 from 'd3';
+import { BarChart, LineChart, ScatterPlot, PieChart } from './Charts';
 
 const Index = () => {
   const [scriptModules, setScriptModules] = useState([]);
@@ -22,12 +24,21 @@ const Index = () => {
   const [newScriptName, setNewScriptName] = useState('');
   const [editingScriptId, setEditingScriptId] = useState(null);
   const [workspaceType, setWorkspaceType] = useState('default');
-  const [chartData, setChartData] = useState([]);
-  const [presentationData, setPresentationData] = useState({
-    template: '',
-    colors: [],
-    fonts: []
-  });
+  const [data, setData] = useState([]);
+  const [selectedChart, setSelectedChart] = useState('bar');
+  const [fileContent, setFileContent] = useState('');
+
+  const handleFileUpload = useCallback((event) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target.result;
+      setFileContent(content);
+      const parsedData = d3.csvParse(content);
+      setData(parsedData);
+    };
+    reader.readAsText(file);
+  }, []);
 
   useEffect(() => {
     // Load script modules and sandbox files from localStorage
@@ -151,67 +162,44 @@ return "Presentation workspace configured";
   };
 
   const renderWorkspace = () => {
-    switch (workspaceType) {
-      case 'data-analytics':
-        return (
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Data Analytics Workspace</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Data Summary</h3>
-                <ScrollArea className="h-[200px] w-full rounded-md border p-4">
-                  <pre>{JSON.stringify(chartData, null, 2)}</pre>
-                </ScrollArea>
+    return (
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Data Visualization Workspace</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">Data Upload</h3>
+            <Input type="file" onChange={handleFileUpload} accept=".csv" />
+          </div>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">Chart Type</h3>
+            <Select value={selectedChart} onValueChange={setSelectedChart}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a chart type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="bar">Bar Chart</SelectItem>
+                <SelectItem value="line">Line Chart</SelectItem>
+                <SelectItem value="scatter">Scatter Plot</SelectItem>
+                <SelectItem value="pie">Pie Chart</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Visualization</h3>
+            {data.length > 0 && (
+              <div className="w-full h-[400px]">
+                {selectedChart === 'bar' && <BarChart data={data} />}
+                {selectedChart === 'line' && <LineChart data={data} />}
+                {selectedChart === 'scatter' && <ScatterPlot data={data} />}
+                {selectedChart === 'pie' && <PieChart data={data} />}
               </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Interactive Chart</h3>
-                <LineChart width={600} height={300} data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="value" stroke="#8884d8" />
-                </LineChart>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      case 'presentation':
-        return (
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Presentation Workspace</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Template</h3>
-                <img src={presentationData.template} alt="Presentation Template" className="max-w-full h-auto" />
-              </div>
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Color Palette</h3>
-                <div className="flex space-x-2">
-                  {presentationData.colors.map((color, index) => (
-                    <div key={index} className="w-10 h-10 rounded-full" style={{ backgroundColor: color }}></div>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Fonts</h3>
-                <ul>
-                  {presentationData.fonts.map((font, index) => (
-                    <li key={index} style={{ fontFamily: font }}>{font}</li>
-                  ))}
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      default:
-        return null;
-    }
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
