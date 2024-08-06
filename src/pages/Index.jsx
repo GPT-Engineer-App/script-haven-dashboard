@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { motion } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import * as d3 from 'd3';
-import { BarChart, LineChart, ScatterPlot, PieChart } from './Charts';
+import { BarChart as BarChartComponent, LineChart as LineChartComponent, ScatterPlot as ScatterPlotComponent, PieChart as PieChartComponent } from './Charts';
 
 const Index = () => {
   const [scriptModules, setScriptModules] = useState([]);
@@ -190,10 +190,10 @@ return "Presentation workspace configured";
             <h3 className="text-lg font-semibold mb-2">Visualization</h3>
             {data.length > 0 && (
               <div className="w-full h-[400px]">
-                {selectedChart === 'bar' && <BarChart data={data} />}
-                {selectedChart === 'line' && <LineChart data={data} />}
-                {selectedChart === 'scatter' && <ScatterPlot data={data} />}
-                {selectedChart === 'pie' && <PieChart data={data} />}
+                {selectedChart === 'bar' && <BarChartComponent data={data} />}
+                {selectedChart === 'line' && <LineChartComponent data={data} />}
+                {selectedChart === 'scatter' && <ScatterPlotComponent data={data} />}
+                {selectedChart === 'pie' && <PieChartComponent data={data} />}
               </div>
             )}
           </div>
