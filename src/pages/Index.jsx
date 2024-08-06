@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -27,6 +27,15 @@ const Index = () => {
   const [data, setData] = useState([]);
   const [selectedChart, setSelectedChart] = useState('bar');
   const [fileContent, setFileContent] = useState('');
+
+  const setChartData = useCallback((newData) => {
+    setData(newData);
+  }, []);
+
+  const setPresentationData = useCallback((presentationData) => {
+    // Handle presentation data
+    console.log('Presentation data:', presentationData);
+  }, []);
 
   const handleFileUpload = useCallback((event) => {
     const file = event.target.files[0];
@@ -124,7 +133,7 @@ return "Presentation workspace configured";
   };
 
   const handleDragStart = (e, moduleId) => {
-    e.dataTransfer.setData('moduleId', moduleId);
+    e.dataTransfer.setData('moduleId', moduleId.toString());
   };
 
   const handleDragOver = (e) => {
@@ -133,8 +142,8 @@ return "Presentation workspace configured";
 
   const handleDrop = (e) => {
     e.preventDefault();
-    const moduleId = e.dataTransfer.getData('moduleId');
-    const module = scriptModules.find(m => m.id === parseInt(moduleId));
+    const moduleId = parseInt(e.dataTransfer.getData('moduleId'), 10);
+    const module = scriptModules.find(m => m.id === moduleId);
     if (module) {
       executeScript(module);
     }
@@ -143,10 +152,10 @@ return "Presentation workspace configured";
   const executeScript = (script) => {
     try {
       // Create a new Function from the script content
-      const scriptFunction = new Function('sandboxFiles', 'setWorkspaceType', 'setChartData', 'setPresentationData', script.content);
+      const scriptFunction = new Function('sandboxFiles', 'setWorkspaceType', 'setData', 'setSelectedChart', script.content);
       
       // Execute the script with the current sandboxFiles and setter functions
-      const result = scriptFunction(sandboxFiles, setWorkspaceType, setChartData, setPresentationData);
+      const result = scriptFunction(sandboxFiles, setWorkspaceType, setData, setSelectedChart);
       
       // Update the output
       setOutput(`Executed script: ${script.name}\nResult: ${JSON.stringify(result, null, 2)}`);
