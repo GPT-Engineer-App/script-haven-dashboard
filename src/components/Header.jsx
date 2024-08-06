@@ -1,15 +1,21 @@
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Settings, User } from "lucide-react"
+import { LayoutDashboard, Settings, User, Moon, Sun } from "lucide-react"
+import { useTheme } from "./theme-provider"
 
 const Header = () => {
+  const { theme, setTheme } = useTheme()
+
   return (
-    <header className="bg-white shadow-sm">
+    <header className="bg-card shadow-sm">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div className="flex items-center">
-          <LayoutDashboard className="h-6 w-6 mr-2" />
-          <h1 className="text-xl font-semibold">Admin Dashboard</h1>
+          <LayoutDashboard className="h-6 w-6 mr-2 text-primary" />
+          <h1 className="text-xl font-semibold">Script Sandbox</h1>
         </div>
         <div>
+          <Button variant="ghost" size="icon" className="mr-2" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </Button>
           <Button variant="ghost" size="icon" className="mr-2">
             <Settings className="h-5 w-5" />
           </Button>
