@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { navItems } from "./nav-items";
 import Header from "./components/Header";
 import { ThemeProvider } from "./components/theme-provider";
+import Index from "./pages/Index";
 
 const queryClient = new QueryClient();
 
@@ -18,6 +19,7 @@ const App = () => (
             <Header />
             <main className="pt-6">
               <Routes>
+                <Route path="/" element={<Index />} />
                 {navItems.map(({ to, page }) => (
                   <Route key={to} path={to} element={page} />
                 ))}
