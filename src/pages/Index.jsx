@@ -8,9 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { AlertCircle, Play, Save, Trash2 } from "lucide-react"
+import { AlertCircle, Play, Save, Trash2, Pencil, BarChart, PresentationScreen } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { motion } from "framer-motion";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 const Index = () => {
   const [scriptModules, setScriptModules] = useState([]);
@@ -20,12 +21,59 @@ const Index = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newScriptName, setNewScriptName] = useState('');
   const [editingScriptId, setEditingScriptId] = useState(null);
+  const [workspaceType, setWorkspaceType] = useState('default');
+  const [chartData, setChartData] = useState([]);
+  const [presentationData, setPresentationData] = useState({
+    template: '',
+    colors: [],
+    fonts: []
+  });
 
   useEffect(() => {
     // Load script modules and sandbox files from localStorage
     const savedModules = JSON.parse(localStorage.getItem('scriptModules')) || [];
     const savedFiles = JSON.parse(localStorage.getItem('sandboxFiles')) || [];
-    setScriptModules(savedModules);
+    
+    // If there are no saved modules, add example modules
+    if (savedModules.length === 0) {
+      const exampleModules = [
+        {
+          id: 1,
+          name: "Data Analytics Script",
+          content: `
+// This script sets up a data analytics workspace
+setWorkspaceType('data-analytics');
+setChartData([
+  { name: 'Jan', value: 400 },
+  { name: 'Feb', value: 300 },
+  { name: 'Mar', value: 200 },
+  { name: 'Apr', value: 278 },
+  { name: 'May', value: 189 },
+]);
+return "Data analytics workspace configured";
+          `
+        },
+        {
+          id: 2,
+          name: "Presentation Script",
+          content: `
+// This script sets up a presentation workspace
+setWorkspaceType('presentation');
+setPresentationData({
+  template: 'https://example.com/template.jpg',
+  colors: ['#FF5733', '#33FF57', '#3357FF'],
+  fonts: ['Arial', 'Helvetica', 'Times New Roman']
+});
+return "Presentation workspace configured";
+          `
+        }
+      ];
+      setScriptModules(exampleModules);
+      localStorage.setItem('scriptModules', JSON.stringify(exampleModules));
+    } else {
+      setScriptModules(savedModules);
+    }
+    
     setSandboxFiles(savedFiles);
   }, []);
 
@@ -84,10 +132,10 @@ const Index = () => {
   const executeScript = (script) => {
     try {
       // Create a new Function from the script content
-      const scriptFunction = new Function('sandboxFiles', script.content);
+      const scriptFunction = new Function('sandboxFiles', 'setWorkspaceType', 'setChartData', 'setPresentationData', script.content);
       
-      // Execute the script with the current sandboxFiles
-      const result = scriptFunction(sandboxFiles);
+      // Execute the script with the current sandboxFiles and setter functions
+      const result = scriptFunction(sandboxFiles, setWorkspaceType, setChartData, setPresentationData);
       
       // Update the output
       setOutput(`Executed script: ${script.name}\nResult: ${JSON.stringify(result, null, 2)}`);
@@ -99,6 +147,70 @@ const Index = () => {
       localStorage.setItem('sandboxFiles', JSON.stringify(updatedFiles));
     } catch (error) {
       setOutput(`Error executing script: ${script.name}\n${error.message}`);
+    }
+  };
+
+  const renderWorkspace = () => {
+    switch (workspaceType) {
+      case 'data-analytics':
+        return (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Data Analytics Workspace</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold mb-2">Data Summary</h3>
+                <ScrollArea className="h-[200px] w-full rounded-md border p-4">
+                  <pre>{JSON.stringify(chartData, null, 2)}</pre>
+                </ScrollArea>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Interactive Chart</h3>
+                <LineChart width={600} height={300} data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="value" stroke="#8884d8" />
+                </LineChart>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      case 'presentation':
+        return (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Presentation Workspace</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold mb-2">Template</h3>
+                <img src={presentationData.template} alt="Presentation Template" className="max-w-full h-auto" />
+              </div>
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold mb-2">Color Palette</h3>
+                <div className="flex space-x-2">
+                  {presentationData.colors.map((color, index) => (
+                    <div key={index} className="w-10 h-10 rounded-full" style={{ backgroundColor: color }}></div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Fonts</h3>
+                <ul>
+                  {presentationData.fonts.map((font, index) => (
+                    <li key={index} style={{ fontFamily: font }}>{font}</li>
+                  ))}
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      default:
+        return null;
     }
   };
 
@@ -213,6 +325,7 @@ const Index = () => {
           </CardContent>
         </Card>
       </motion.div>
+      {renderWorkspace()}
     </div>
   );
 };
