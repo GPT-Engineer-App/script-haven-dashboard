@@ -20,9 +20,6 @@ const App = () => (
             <main className="pt-6">
               <Routes>
                 <Route path="/" element={<Index />} />
-                {navItems.map(({ to, page }) => (
-                  <Route key={to} path={to} element={page} />
-                ))}
               </Routes>
             </main>
           </div>
